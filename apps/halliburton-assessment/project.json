@@ -1,0 +1,9 @@
+{
+  "name": "halliburton-assessment",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/halliburton-assessment",
+  "projectType": "application",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project halliburton-assessment --web",
+  "targets": {}
+}
