@@ -47,14 +47,12 @@ export class Post {
   @BeforeInsert()
   @BeforeUpdate()
   checkForRestrictedContent() {
-    console.log(this);
     this.containsRestricted =
       this.hasRestrictedWords(this.content) ||
       this.hasRestrictedWords(this.title);
   }
 
   private hasRestrictedWords(text: string): boolean {
-    console.log('Checking for restricted words', text);
     const words = text.split(/\s+/);
     const restrictedPattern = /\b[A-Z][a-zA-Z]*[A-Z]\b/; // regex rep
     const containsRestricted = words.some((word) =>
