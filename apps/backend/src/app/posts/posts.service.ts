@@ -33,6 +33,13 @@ export class PostsService {
     return await this.postRepository.save(post);
   }
 
+  async findUserPosts(userId: number) {
+    return await this.postRepository.find({
+      where: { userId },
+      relations: ['user'],
+    });
+  }
+
   async findAll() {
     return await this.postRepository.find({ relations: ['user'] });
   }

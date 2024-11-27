@@ -37,16 +37,28 @@ export function LoginForm() {
       const endpoint =
         mode === 'login'
           ? 'http://localhost:8080/api/auth/login'
-          : 'http://localhost:8080/api/auth/register';
+          : 'http://localhost:8080/api/users';
+      const body =
+        mode === 'login'
+          ? { email: formData.email, password: formData.password }
+          : formData;
+      console.log('Form data:', body);
+
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {
         alert('Failed to authenticate: ' + response.statusText);
         throw new Error('Failed to authenticate');
+      }
+      if (mode === 'register') {
+        alert('Registered successfully');
+        setMode('login');
+        router.push('/auth'); // Redirect to login page
+        return;
       }
 
       const data = await response.json();

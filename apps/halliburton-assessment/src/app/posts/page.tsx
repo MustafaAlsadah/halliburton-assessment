@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 
 import { Post } from '@/../../apps/backend/src/app/posts/entities/post.entity';
 import { title } from 'process';
+import Link from 'next/link';
 
 export default function PostsPage() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -153,23 +154,28 @@ export default function PostsPage() {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-4 ">
         {posts.length === 0 && <div>No posts available.</div>}
         {posts.length !== 0 &&
           posts.map((post) => (
-            <Card key={post.id}>
-              <CardHeader>
-                <img
-                  src={post.thumbnail}
-                  alt={post.title}
-                  className="h-32 w-full object-cover rounded-md"
-                />
-              </CardHeader>
-              <CardContent>
-                <CardTitle>{post.title}</CardTitle>
-                <p>{post.content}</p>
-              </CardContent>
-            </Card>
+            <Link key={post.id} href={`/posts/${post.id}`}>
+              <Card
+                key={post.id}
+                className="transition-all duration-300 hover:shadow-md hover:bg-slate-100"
+              >
+                <CardHeader>
+                  <img
+                    src={post.thumbnail}
+                    alt={post.title}
+                    className="h-32 w-full object-cover rounded-md"
+                  />
+                </CardHeader>
+                <CardContent>
+                  <CardTitle>{post.title}</CardTitle>
+                  <p>{post.content}</p>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
       </div>
     </div>
