@@ -25,6 +25,9 @@ export class PostsService {
 
     const post = this.postRepository.create({
       ...createPostDto,
+      thumbnail:
+        createPostDto.thumbnail ||
+        'https://www.logotypes101.com/logos/564/B73219CE0A6FF2556B5CC1F935D3151E/Halliburton22.png',
     });
 
     return await this.postRepository.save(post);
