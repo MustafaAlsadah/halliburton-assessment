@@ -12,6 +12,9 @@ const nextConfig = {
     // See: https://github.com/gregberge/svgr
     svgr: false,
   },
+  images: {
+    domains: ['images.unsplash.com', "posts-thumbnails.oss-me-central-1.aliyuncs.com"],
+  },
 };
 
 const plugins = [

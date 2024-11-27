@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -22,7 +22,9 @@ export class PostsService {
     if (!user) {
       throw new Error('User not found');
     }
-
+    if (!createPostDto.title || !createPostDto.content) {
+      throw new BadRequestException('Title and content are required');
+    }
     const post = this.postRepository.create({
       ...createPostDto,
       thumbnail:

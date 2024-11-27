@@ -21,18 +21,23 @@ export function LoginForm() {
     password: '',
     firstName: '',
     lastName: '',
+    role: 'USER',
   });
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.id]: e.target.value });
+    const { id, value } = e.target;
+    setFormData({ ...formData, [id]: value });
+  };
+
+  const handleRoleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, role: e.target.value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-
     try {
       const endpoint =
         mode === 'login'
@@ -42,7 +47,25 @@ export function LoginForm() {
         mode === 'login'
           ? { email: formData.email, password: formData.password }
           : formData;
-      console.log('Form data:', body);
+
+      const isAdminRegister = mode === 'register' && formData.role === 'ADMIN';
+      if (isAdminRegister) {
+        const isAdminExisting = await fetch(
+          'http://localhost:8080/api/users/isAdminExists'
+        );
+
+        const data = await isAdminExisting.json();
+        if (data.adminExists) {
+          const proceed = confirm(
+            'An ADMIN already exists. Do you want to replace the current ADMIN?'
+          );
+          if (!proceed) {
+            setFormData({ ...formData, role: 'USER' });
+            // exit the function
+            return;
+          }
+        }
+      }
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -51,7 +74,9 @@ export function LoginForm() {
       });
 
       if (!response.ok) {
-        alert('Failed to authenticate: ' + response.statusText);
+        const resJson = await response.json();
+        const errorMessages = resJson.message || resJson.error;
+        alert('Failed to authenticate: ' + errorMessages);
         throw new Error('Failed to authenticate');
       }
       if (mode === 'register') {
@@ -62,7 +87,7 @@ export function LoginForm() {
       }
 
       const data = await response.json();
-      localStorage.setItem('user_id', JSON.stringify(data.user_id)); // Save user info
+      localStorage.setItem('user_id', JSON.stringify(data.user_id)); // Save USER info
       localStorage.setItem('access_token', data.access_token); // Save token
       alert('Authenticated successfully');
       router.push('/posts'); // Redirect to homepage or dashboard
@@ -108,6 +133,37 @@ export function LoginForm() {
                   required={mode === 'register'}
                 />
               </div>
+              <div className="grid gap-2">
+                <Label>Role</Label>
+                <div className="flex gap-4">
+                  <div>
+                    <input
+                      type="radio"
+                      id="USER"
+                      name="role"
+                      value="USER"
+                      checked={formData.role === 'USER'}
+                      onChange={handleRoleChange}
+                    />
+                    <Label htmlFor="USER" className="ml-2 cursor-pointer">
+                      User
+                    </Label>
+                  </div>
+                  <div>
+                    <input
+                      type="radio"
+                      id="ADMIN"
+                      name="role"
+                      value="ADMIN"
+                      checked={formData.role === 'ADMIN'}
+                      onChange={handleRoleChange}
+                    />
+                    <Label htmlFor="ADMIN" className="ml-2 cursor-pointer">
+                      Admin
+                    </Label>
+                  </div>
+                </div>
+              </div>
             </>
           )}
           <div className="grid gap-2">
@@ -137,7 +193,7 @@ export function LoginForm() {
         <div className="mt-4 text-center text-sm">
           {mode === 'login' ? (
             <>
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <span
                 onClick={() => setMode('register')}
                 className="underline cursor-pointer"

@@ -17,9 +17,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { Post } from '@/../../apps/backend/src/app/posts/entities/post.entity';
 import { title } from 'process';
 import Link from 'next/link';
+import Image from 'next/image';
+import { url } from 'inspector';
 
 export default function PostsPage() {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [addPostDialogOpen, setAddPostDialogOpen] = useState(false);
+  const [containsCapitalCaseWords, setContainsCapitalCaseWords] =
+    useState(false);
+  const [thumbnailFile, setThumbnailFile] = useState<File | undefined>(
+    undefined
+  );
   const [newPost, setNewPost] = useState<Partial<Post>>({
     title: '',
     content: '',
@@ -42,46 +50,55 @@ export default function PostsPage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { id, value } = e.target;
+
     setNewPost((prev) => ({ ...prev, [id]: value }));
-    if (e.target.files && e.target.files[0]) {
-      setNewPost((prev) => ({ ...prev, thumbnail: e.target.files![0] }));
-    }
+
+    const capitalCaseRegex = /\b[A-Z][a-zA-Z]*[A-Z]\b/;
+    const isCapitalCase =
+      (id === 'title' && capitalCaseRegex.test(value)) ||
+      (id === 'content' && capitalCaseRegex.test(value)) ||
+      capitalCaseRegex.test(
+        id === 'title' ? newPost.content || '' : newPost.title || ''
+      );
+
+    setContainsCapitalCaseWords(isCapitalCase);
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    // if (e.target.files && e.target.files[0]) {
-    //   const file = e.target.files[0];
-    //   // Prepare form data for Cloudinary upload
-    //   const formData = new FormData();
-    //   formData.append('file', file);
-    //   formData.append('upload_preset', 'your_upload_preset'); // Replace with your Cloudinary upload preset
-    //   formData.append('cloud_name', 'your_cloud_name'); // Replace with your Cloudinary cloud name
-    //   try {
-    //     // Upload the image to Cloudinary
-    //     const response = await fetch(`https://api.cloudinary.com/v1_1/your_cloud_name/image/upload`, {
-    //       method: 'POST',
-    //       body: formData,
-    //     });
-    //     if (!response.ok) {
-    //       throw new Error('Failed to upload image to Cloudinary');
-    //     }
-    //     const data = await response.json();
-    //     // Update the newPost state with the uploaded image URL
-    //     setNewPost((prev) => ({ ...prev, thumbnail: data.secure_url })); // Cloudinary's secure URL
-    //   } catch (error) {
-    //     console.error('Error uploading image:', error);
-    //   }
-    // }
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setThumbnailFile(file);
   };
 
   const addPost = async () => {
-    const postData = {
-      title: newPost.title,
-      content: newPost.content,
-      thumbnail: newPost.thumbnail,
-    };
-
     try {
+      if (!newPost.title || !newPost.content) {
+        alert('Please fill in all the fields: title and content');
+        return;
+      }
+      let url;
+      if (thumbnailFile) {
+        const multipartFormData = new FormData();
+        multipartFormData.append('file', thumbnailFile as Blob);
+
+        const ssoResponse = await fetch('http://localhost:8080/api/upload', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+          },
+          body: multipartFormData,
+        });
+        const data = await ssoResponse.json();
+        url = data.url;
+      }
+
+      console.log('New post:', {
+        title: newPost.title,
+        content: newPost.content,
+        thumbnail: url ? url : newPost.thumbnail,
+        userId: localStorage.getItem('user_id'),
+      });
       const response = await fetch('http://localhost:8080/api/posts', {
         method: 'POST',
         headers: {
@@ -91,7 +108,7 @@ export default function PostsPage() {
         body: JSON.stringify({
           title: newPost.title,
           content: newPost.content,
-          thumbnail: newPost.thumbnail,
+          thumbnail: url ? url : newPost.thumbnail,
           userId: localStorage.getItem('user_id'),
         }),
       });
@@ -103,8 +120,13 @@ export default function PostsPage() {
       const addedPost = await response.json();
       setPosts((prev) => [...prev, addedPost]); // Update posts list
       setNewPost({ title: '', content: '', thumbnail: undefined }); // Reset form
-    } catch (err) {
+      alert('Post added successfully');
+      url = '';
+    } catch (err: any) {
       console.error('Error adding post:', err);
+      alert('Failed to add post: ' + err.message);
+    } finally {
+      setAddPostDialogOpen(false);
     }
   };
 
@@ -112,46 +134,63 @@ export default function PostsPage() {
     <div className="p-6">
       <div className="mb-6 flex justify-between items-center">
         <h1 className="text-3xl font-bold">Posts</h1>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="default">Add New Post</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add a New Post</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="heading">Heading</Label>
-                <Input
-                  id="title"
-                  type="text"
-                  placeholder="Post title"
-                  value={newPost.title}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="content">Content</Label>
-                <Textarea
-                  id="content"
-                  placeholder="Write your post content here..."
-                  value={newPost.content}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="thumbnail">Thumbnail</Label>
-                <Input id="thumbnail" type="file" onChange={handleFileChange} />
-              </div>
-              <Button className="mt-4" onClick={addPost}>
-                Submit
+        <div className="mb-6 flex justify-between items-center">
+          <Dialog open={addPostDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="default"
+                onClick={() => setAddPostDialogOpen(true)}
+              >
+                Add New Post
               </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add a New Post</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="title">Title</Label>
+                  <Input
+                    id="title"
+                    type="text"
+                    placeholder="Post title"
+                    value={newPost.title}
+                    onChange={handleInputChange}
+                    required={true}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="content">Content</Label>
+                  <Textarea
+                    id="content"
+                    placeholder="Write your post content here..."
+                    value={newPost.content}
+                    onChange={handleInputChange}
+                    required={true}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="thumbnail">Thumbnail</Label>
+                  <Input
+                    id="thumbnail"
+                    type="file"
+                    onChange={handleFileChange}
+                  />
+                </div>
+                {containsCapitalCaseWords && (
+                  <div className="text-red-500 text-sm">
+                    Warning: This post contains words starting and ending with
+                    capital letters.
+                  </div>
+                )}
+                <Button className="mt-4" onClick={addPost}>
+                  Submit
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-4 ">
@@ -172,7 +211,6 @@ export default function PostsPage() {
                 </CardHeader>
                 <CardContent>
                   <CardTitle>{post.title}</CardTitle>
-                  <p>{post.content}</p>
                 </CardContent>
               </Card>
             </Link>
