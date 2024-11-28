@@ -54,8 +54,18 @@ export class PostsService {
   }
 
   async update(id: number, updatePostDto: UpdatePostDto) {
-    await this.postRepository.update(id, updatePostDto); // Update the post
-    return await this.findById(id); // Return the updated post
+    // we nned to use .save() method to update the post
+    // await this.postRepository.update(id, updatePostDto); // Update the post
+    // return await this.findById(id); // Return the updated post
+    const post = await this.postRepository.findOne({ where: { id } });
+    if (!post) {
+      throw new Error('Post not found');
+    }
+    const newPost = this.postRepository.create({
+      ...post,
+      ...updatePostDto,
+    });
+    return await this.postRepository.save(newPost);
   }
 
   async remove(id: number) {

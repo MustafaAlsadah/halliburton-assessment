@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   Post,
@@ -12,7 +13,11 @@ import { FileInterceptor } from '@nestjs/platform-express';
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  // a multipart form data file upload endpoint
+  @Post('/gemini')
+  async getGemini(@Body() body) {
+    return await this.appService.generateText(body.prompt);
+  }
+
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(@UploadedFile() file) {

@@ -5,6 +5,7 @@
   "scripts": {},
   "private": true,
   "dependencies": {
+    "@google/generative-ai": "^0.21.0",
     "@nestjs/common": "^10.0.2",
     "@nestjs/core": "^10.0.2",
     "@nestjs/jwt": "^10.2.0",
@@ -23,6 +24,7 @@
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.461.0",
     "next": "14.2.16",
+    "openai": "^4.73.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
@@ -30,6 +32,7 @@
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-file-icon": "^1.5.0",
+    "recharts": "^2.13.3",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.0",
     "tailwind-merge": "^2.5.5",

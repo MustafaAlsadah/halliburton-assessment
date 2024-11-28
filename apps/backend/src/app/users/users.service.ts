@@ -42,6 +42,10 @@ export class UsersService {
     return await this.userRepository.find();
   }
 
+  async findBlockedUsers() {
+    return await this.userRepository.find({ where: { isBlocked: true } });
+  }
+
   async findOne(id: number) {
     return await this.userRepository.findOne({ where: { id } });
   }

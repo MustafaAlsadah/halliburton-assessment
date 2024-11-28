@@ -29,7 +29,6 @@ import {
 
 export default function PostsPage() {
   const { isAdmin, loading } = useAuth();
-  console.log('isAdmin', isAdmin);
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [addPostDialogOpen, setAddPostDialogOpen] = useState(false);
@@ -176,20 +175,22 @@ export default function PostsPage() {
       }
 
       const attachmentsUrls: string[] = [];
-      for (const file of newPost.attachments || []) {
-        const multipartFormData = new FormData();
-        multipartFormData.append('file', file);
+      if (newPost.attachments) {
+        for (const file of newPost.attachments || []) {
+          const multipartFormData = new FormData();
+          multipartFormData.append('file', file);
 
-        const ssoResponse = await fetch('http://localhost:8080/api/upload', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-          },
-          body: multipartFormData,
-        });
-        const data = await ssoResponse.json();
-        console.log('Data:', data);
-        attachmentsUrls.push(data.url);
+          const ssoResponse = await fetch('http://localhost:8080/api/upload', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+            },
+            body: multipartFormData,
+          });
+          const data = await ssoResponse.json();
+          console.log('Data:', data);
+          attachmentsUrls.push(data.url);
+        }
       }
 
       const response = await fetch(endpoint, {
@@ -416,25 +417,27 @@ export default function PostsPage() {
                       className="h-32 w-full object-cover rounded-md"
                     />
                   </CardHeader>
-                  <CardContent className="flex justify-between items-center">
-                    <CardTitle>{post.title}</CardTitle>
+                  <CardContent className="flex justify-between flex-col items-">
+                    <div className="flex justify-between items-center">
+                      <CardTitle>{post.title}</CardTitle>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="ml-2"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleEditPost(post);
+                        }}
+                      >
+                        Edit
+                      </Button>
+                    </div>
                     {isAdmin && (
-                      <p className="text-sm text-gray-500">
-                        By: {post.user.name}
+                      <p className="text-sm text-gray-500 mt-2 mb-0">
+                        <hr className="my-2 border-gray-300 border-t" />
+                        By: {post?.user?.firstName + ' ' + post?.user?.lastName}
                       </p>
                     )}
-
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="ml-2"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleEditPost(post);
-                      }}
-                    >
-                      Edit
-                    </Button>
                   </CardContent>
                 </Card>
               </Link>

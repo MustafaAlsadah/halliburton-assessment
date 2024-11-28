@@ -48,8 +48,16 @@ export class Post {
   updatedAt: Date;
 
   @BeforeInsert()
-  @BeforeUpdate()
   checkForRestrictedContent() {
+    console.log('Checking for restricted content');
+    this.containsRestricted =
+      this.hasRestrictedWords(this.content) ||
+      this.hasRestrictedWords(this.title);
+  }
+
+  @BeforeUpdate()
+  checkForRestrictedContent2() {
+    console.log('Checking for restricted content');
     this.containsRestricted =
       this.hasRestrictedWords(this.content) ||
       this.hasRestrictedWords(this.title);

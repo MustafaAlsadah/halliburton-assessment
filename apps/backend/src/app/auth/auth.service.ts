@@ -14,10 +14,12 @@ export class AuthService {
   ) {}
 
   async validateUser(email: string, password: string) {
-    console.log(email, password);
     const user = await this.userService.findByEmail(email);
     if (!user) {
       throw new NotFoundException('User not found');
+    }
+    if (user.isBlocked) {
+      throw new NotFoundException('User is blocked');
     }
     const correctPassword = await bcrypt.compare(password, user.password);
     if (user && correctPassword) {

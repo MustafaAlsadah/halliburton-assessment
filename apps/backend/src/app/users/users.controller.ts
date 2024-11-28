@@ -28,6 +28,12 @@ export class UsersController {
     return this.usersService.isAdminExists();
   }
 
+  @Get('blocked')
+  @UseGuards(AuthGuard('jwt'))
+  findBlockedUsers() {
+    return this.usersService.findBlockedUsers();
+  }
+
   @Get()
   @UseGuards(AuthGuard('jwt'))
   findAll() {
