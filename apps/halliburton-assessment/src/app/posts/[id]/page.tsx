@@ -8,8 +8,6 @@ import { useRouter } from 'next/navigation';
 import { FileIcon, defaultStyles } from 'react-file-icon';
 import ShinyButton from '@/components/ui/shiny-button';
 import { LucideDownload } from 'lucide-react';
-import ShineBorder from '@/components/ui/shine-border';
-
 interface Post {
   id: number;
   title: string;

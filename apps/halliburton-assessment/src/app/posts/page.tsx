@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import jsPDF from 'jspdf';
+import useAuth from '../hooks/useAuth.ts';
 
 import { Post } from '@/../../apps/backend/src/app/posts/entities/post.entity';
 import Link from 'next/link';
@@ -27,6 +28,9 @@ import {
 } from 'lucide-react';
 
 export default function PostsPage() {
+  const { isAdmin, loading } = useAuth();
+  console.log('isAdmin', isAdmin);
+
   const [posts, setPosts] = useState<Post[]>([]);
   const [addPostDialogOpen, setAddPostDialogOpen] = useState(false);
   const [selectedPostIds, setSelectedPostIds] = useState<number[]>([]);
@@ -44,16 +48,18 @@ export default function PostsPage() {
   });
 
   useEffect(() => {
-    // Fetch posts from the backend
-    fetch('http://localhost:8080/api/posts', {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => setPosts(data))
-      .catch((err) => console.error('Failed to fetch posts:', err));
-  }, []);
+    if (!loading) {
+      // Fetch posts from the backend
+      fetch('http://localhost:8080/api/posts', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => setPosts(data))
+        .catch((err) => console.error('Failed to fetch posts:', err));
+    }
+  }, [loading]);
 
   const handleEditPost = (post: Post) => {
     setNewPost(post); // Prepopulate the form with post data
@@ -264,6 +270,10 @@ export default function PostsPage() {
     doc.save('posts.pdf'); // Save as a PDF
   };
 
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className="p-6">
       <div className="mb-6 flex justify-between items-center">
@@ -382,7 +392,7 @@ export default function PostsPage() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-4 ">
         {posts.length === 0 && <div>No posts available.</div>}
         {posts.length !== 0 &&
-          posts.map((post) => (
+          posts?.map((post) => (
             <div className="relative" key={post.id}>
               <input
                 type="checkbox"
@@ -408,6 +418,12 @@ export default function PostsPage() {
                   </CardHeader>
                   <CardContent className="flex justify-between items-center">
                     <CardTitle>{post.title}</CardTitle>
+                    {isAdmin && (
+                      <p className="text-sm text-gray-500">
+                        By: {post.user.name}
+                      </p>
+                    )}
+
                     <Button
                       type="button"
                       variant="outline"
