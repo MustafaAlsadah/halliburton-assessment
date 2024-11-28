@@ -13,11 +13,14 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import jsPDF from 'jspdf';
 
 import { Post } from '@/../../apps/backend/src/app/posts/entities/post.entity';
 import Link from 'next/link';
 import {
   LucideCopyX,
+  LucideFile,
+  LucideFileUp,
   LucidePlusSquare,
   LucideSquare,
   LucideSquareX,
@@ -233,12 +236,48 @@ export default function PostsPage() {
     }
   };
 
+  const exportPostsToPDF = (ids?: number[]) => {
+    const postIds = ids ? ids : selectedPostIds;
+    if (postIds.length === 0) {
+      alert('No posts to export');
+      return;
+    }
+    const filteredPosts = posts.filter((post) => postIds.includes(post.id));
+
+    const doc = new jsPDF();
+
+    filteredPosts.forEach((post, index) => {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.text(post.title, 10, 10 + index * 30);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(12);
+      const lines = doc.splitTextToSize(post.content, 180);
+      doc.text(lines, 10, 20 + index * 30);
+
+      if (index !== filteredPosts.length - 1) {
+        doc.addPage();
+      }
+    });
+
+    doc.save('posts.pdf'); // Save as a PDF
+  };
+
   return (
     <div className="p-6">
       <div className="mb-6 flex justify-between items-center">
         <h1 className="text-3xl font-bold">Posts</h1>
         <div className="mb-6 flex justify-between items-center">
           <Dialog open={addPostDialogOpen}>
+            <Button
+              variant="default"
+              className="mr-2 bg-blue-500 text-white hover:bg-blue-600"
+              onClick={() => exportPostsToPDF(posts.map((post) => post.id))}
+            >
+              <LucideFileUp className="mr-2" />
+              Export posts to PDF
+            </Button>
             {selectedPostIds.length > 0 && (
               <Button
                 variant="default"
