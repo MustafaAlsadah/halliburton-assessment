@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Post } from './entities/post.entity';
 import { User } from '../users/entities/user.entity';
 
@@ -54,10 +54,19 @@ export class PostsService {
   }
 
   async update(id: number, updatePostDto: UpdatePostDto) {
-    return await this.postRepository.update(id, updatePostDto);
+    await this.postRepository.update(id, updatePostDto); // Update the post
+    return await this.findById(id); // Return the updated post
   }
 
   async remove(id: number) {
     return await this.postRepository.delete(id);
+  }
+
+  async findById(id: number) {
+    return await this.postRepository.findOne({ where: { id } });
+  }
+
+  async bulkDelete(ids: number[]) {
+    return await this.postRepository.delete({ id: In(ids) });
   }
 }

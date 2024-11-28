@@ -22,6 +22,7 @@
     "ali-oss": "^6.21.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "framer-motion": "^11.12.0",
     "lucide-react": "^0.461.0",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7"

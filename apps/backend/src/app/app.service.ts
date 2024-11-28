@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import OSS from 'ali-oss';
 
 const client = new OSS({
@@ -18,6 +18,11 @@ export class AppService {
 
   async uploadFile(file) {
     try {
+      if (!file) {
+        console.error('No file uploaded');
+        return new BadRequestException('No file uploaded');
+      }
+
       const objectName = `${Date.now()}-${file.originalname}`; // Generate a unique name
       const uploadResult = await client.put(objectName, file.buffer, {
         mime: file.mimetype,

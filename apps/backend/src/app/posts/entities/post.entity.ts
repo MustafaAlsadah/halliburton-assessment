@@ -34,6 +34,9 @@ export class Post {
   @Column({ default: false })
   containsRestricted: boolean;
 
+  @Column('simple-array', { nullable: true }) // Store as a comma-separated list
+  attachments: string[];
+
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 

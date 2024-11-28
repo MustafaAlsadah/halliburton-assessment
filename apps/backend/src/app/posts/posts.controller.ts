@@ -26,6 +26,10 @@ export class PostsController {
 
   @Get()
   findAll(@Req() req) {
+    const userRole = req.user.role;
+    if (userRole === 'ADMIN') {
+      return this.postsService.findAll();
+    }
     const userId = req.user.userId;
     return this.postsService.findUserPosts(userId);
   }
@@ -40,6 +44,10 @@ export class PostsController {
     return this.postsService.update(+id, updatePostDto);
   }
 
+  @Delete('/bulk-delete')
+  bulkRemove(@Body() body: any) {
+    return this.postsService.bulkDelete(body.ids);
+  }
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.postsService.remove(+id);
