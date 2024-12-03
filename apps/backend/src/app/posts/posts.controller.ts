@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Req,
+  BadRequestException,
 } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -34,8 +35,16 @@ export class PostsController {
     return this.postsService.findUserPosts(userId);
   }
 
+  @Get('/chart-data')
+  generateChartData() {
+    return this.postsService.generateChartData();
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
+    if (!id) {
+      throw new BadRequestException('Post ID is required');
+    }
     return this.postsService.findOne(+id);
   }
 
@@ -48,8 +57,12 @@ export class PostsController {
   bulkRemove(@Body() body: any) {
     return this.postsService.bulkDelete(body.ids);
   }
+
   @Delete(':id')
   remove(@Param('id') id: string) {
+    if (!id) {
+      throw new BadRequestException('Post ID is required');
+    }
     return this.postsService.remove(+id);
   }
 }

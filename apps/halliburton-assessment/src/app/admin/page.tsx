@@ -5,12 +5,12 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Post } from '@/../../apps/backend/src/app/posts/entities/post.entity';
 import useAuth from '../hooks/useAuth';
-import { GemIcon, TrendingUp } from 'lucide-react';
+import { GemIcon, Loader2, TrendingUp } from 'lucide-react';
 import { Label, Pie, PieChart } from 'recharts';
 import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts';
 import { RainbowButton } from '@/components/ui/rainbow-button';
 import AnimatedBeamDemo from './PwGemini';
-
+import BarChart from '@/components/BarChart';
 import {
   Card,
   CardContent,
@@ -37,6 +37,7 @@ export default function AdminDashboard() {
   const [usersWithRestrictedPosts, setUsersWithRestrictedPosts] = useState<
     User[]
   >([]);
+  const [geminiProcessing, setGeminiProcessing] = useState(false);
 
   useEffect(() => {
     if (!loading) {
@@ -203,6 +204,8 @@ export default function AdminDashboard() {
 
   if (loading) return <div>Loading...</div>;
 
+  if (!isAdmin) return <div>Unauthorized</div>;
+
   return (
     <div className="p-8">
       {/* Page Title */}
@@ -214,8 +217,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Pie Chart */}
-        <Card className="col-span-2">
+        <Card className="col-span-1">
           <CardHeader className="items-center pb-0">
             <CardTitle>Post Analysis</CardTitle>
             <CardDescription>
@@ -278,6 +280,8 @@ export default function AdminDashboard() {
             </div>
           </CardFooter>
         </Card>
+        <BarChart />
+
         <Card>
           <CardHeader>
             <CardTitle>Posts Additions Per Day</CardTitle>
@@ -375,9 +379,54 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
-        <Card className="border border-sky-600 border-4 shadow-xl">
+        <Card>
           <CardHeader>
-            <AnimatedBeamDemo />
+            <CardTitle>Users with Restricted Posts</CardTitle>
+            <CardDescription>Manage user access.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {usersWithRestrictedPosts.length > 0 ? (
+              usersWithRestrictedPosts
+                .filter(
+                  (user, index, self) =>
+                    index === self.findIndex((u) => u.id === user.id)
+                )
+                .map((user) => (
+                  <Card key={user?.id} className="pt-2">
+                    <CardContent className="flex justify-between items-center">
+                      <div>
+                        <h3 className="font-bold text-sm mt-2 ">
+                          {user?.firstName + ' ' + user?.lastName}
+                        </h3>
+                        <h3 className="text-gray-600 text-xs mb-2">
+                          {user?.email}
+                        </h3>
+                        <p className="text-gray-600 text-xs">
+                          {user?.isBlocked ? 'Blocked' : 'Active'}
+                        </p>
+                      </div>
+                      <Button
+                        variant={user?.isBlocked ? 'default' : 'destructive'}
+                        size="sm"
+                        onClick={() => blockUser(user.id, !user.isBlocked)}
+                      >
+                        {user?.isBlocked ? 'Unblock' : 'Block'}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))
+            ) : (
+              <p className="text-gray-500 text-sm">
+                No users with role USER with restricted posts found.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+        <Card className="border border-black shadow-lg shadow-sky-200 border-2 shadow-xl col-span-3">
+          <CardHeader>
+            <div className="flex w-full justify-center">
+              <AnimatedBeamDemo />
+            </div>
             <br />
             <CardTitle>Analyze Posts with Gemini</CardTitle>
             <CardDescription>
@@ -397,12 +446,16 @@ export default function AdminDashboard() {
               onClick={async () => {
                 try {
                   const allPostsText = posts
-                    .map((post) => `${post.title}\n${post.content}`)
+                    .map((post) => {
+                      const metadata = `author:${post.user}\nisRestricted:${post.containsRestricted}`;
+                      return `${metadata}\n${post.title}\n${post.content}`;
+                    })
                     .join('\n\n');
                   const body = JSON.stringify({
-                    prompt: `${allPostsText}\n\n${prompt}`,
+                    prompt: `This is our database of posts:\n${allPostsText}\n\nanalyze the posts given and process the following prompt:\n${prompt}`,
                   });
 
+                  setGeminiProcessing(true);
                   const response = await fetch(
                     'http://localhost:8080/api/gemini',
                     {
@@ -425,6 +478,8 @@ export default function AdminDashboard() {
                 } catch (error) {
                   console.error('Error sending prompt:', error);
                   alert('Failed to send the prompt.');
+                } finally {
+                  setGeminiProcessing(false);
                 }
               }}
             >
@@ -435,52 +490,18 @@ export default function AdminDashboard() {
                 width={20}
                 height={20}
               />
-              Send Prompt
+              {/* Send Prompt */}
+              {geminiProcessing ? (
+                <Loader2 className="animate-spin h-5 w-5" />
+              ) : (
+                'Send Prompt'
+              )}
             </RainbowButton>
             {response && (
               <div className="mt-4 p-2 border border-gray-300 rounded-md text-sm bg-gray-50">
                 <h3 className="font-bold">Response:</h3>
                 <p>{response || 'No response available.'}</p>
               </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Users with Restricted Posts</CardTitle>
-            <CardDescription>Manage user access.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {usersWithRestrictedPosts.length > 0 ? (
-              usersWithRestrictedPosts.map((user) => (
-                <Card key={user?.id} className="pt-2">
-                  <CardContent className="flex justify-between items-center">
-                    <div>
-                      <h3 className="font-bold text-sm mt-2 ">
-                        {user?.firstName + ' ' + user?.lastName}
-                      </h3>
-                      <h3 className="text-gray-600 text-xs mb-2">
-                        {user?.email}
-                      </h3>
-                      <p className="text-gray-600 text-xs">
-                        {user?.isBlocked ? 'Blocked' : 'Active'}
-                      </p>
-                    </div>
-                    <Button
-                      variant={user?.isBlocked ? 'default' : 'destructive'}
-                      size="sm"
-                      onClick={() => blockUser(user.id, !user.isBlocked)}
-                    >
-                      {user?.isBlocked ? 'Unblock' : 'Block'}
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              <p className="text-gray-500 text-sm">
-                No users with role USER with restricted posts found.
-              </p>
             )}
           </CardContent>
         </Card>

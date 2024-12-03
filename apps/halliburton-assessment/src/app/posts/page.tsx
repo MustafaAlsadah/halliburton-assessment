@@ -258,13 +258,14 @@ export default function PostsPage() {
     filteredPosts.forEach((post, index) => {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(16);
-      doc.text(post.title, 10, 10 + index * 30);
+      doc.text(post.title, 10, 20); // 20 ensures some margin from the top edge
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(12);
       const lines = doc.splitTextToSize(post.content, 180);
-      doc.text(lines, 10, 20 + index * 30);
+      doc.text(lines, 10, 30); // 30 ensures content starts slightly below the title
 
+      // Add a new page after each post except the last one
       if (index !== filteredPosts.length - 1) {
         doc.addPage();
       }
